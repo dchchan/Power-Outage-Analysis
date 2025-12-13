@@ -50,7 +50,18 @@ I built a baseline linear regression model in order to predict power outage dura
 This model could use some work as there's a bit of a gap between the trained RMSE and the test RMSE. The trained RMSE measured 4803.78 whereas the test RMSE measured at 7029.52.
 ## Final Model
 To improve on the baseline model, I added a few new features.
-**CUSTOMERS.AFFECTED**
-**CAUSE.CATEGORY.DETAIL**
-**PCT_WATER_TOT**
+- **CUSTOMERS.AFFECTED**
+- **CAUSE.CATEGORY.DETAIL**
+- **PCT_WATER_TOT**
+These features were found by finding their correlation to the **OUTAGE.DURATION** column. For the numeric values, i used .corr(). For the categorical columns, I one hot encoded them then found their correlation. Features with a higher correlation suggest a stronger relationship with outage duration.
+<img width="452" height="237" alt="image" src="https://github.com/user-attachments/assets/f301ec53-8afb-44c7-8f5e-78cb872ef992" /> <img width="595" height="239" alt="image" src="https://github.com/user-attachments/assets/90cb4f76-5af1-44e6-847c-59fc0b1b316f" />
+I also decided to switch from a **Linear Regression** model to **RandomForestRegressor** because the **Linear Regression** model only assumes a linear relationship between features and the target. This is not always the case and can harm the overall prediction. **RandomForestRegressor** on the other hand is able to capture those non-linear patterns and interactions between features. It is also good at handling outliers, which is important for this dataset because there are some extremely high values in the **OUTAGE.DURATION** column, as some outages lasted for over 1000 hours.
+
+ **RandomForestRegressor** also takes in hyperparameters which helps with precision. I used **GridSearchCV** in order to find the best hyperparameters for this **RandomForestRegressor** model, searching through all combinations of
+ - **max_depth** = 1,3,5,...,19
+ - **n_estimators** = 100, 120, 140, 160, 180
+ - **criterion** = squared_error, absolute_error, friedman_mse, poisson
+The best combination was max_depth = 1, n_estimators = 140, and criterion = poisson.
 ## Fairness Analysis
+In order to test fairness I tested the model on two separate groups. The first group only included data where the **CAUSE.CATEGORY** was severe weather. The second group only included data where **CAUSE.CATEGORY** wasn't severe weather.
+The null hypothesis was that the model was fair and that the RMSE for weather related outages is roughly the same. The alternative hypothesis was that the model is not fair and is biased towards outages caused by severe weather. After running a permutation test, I ended up with a p-vale of 0.7858, so I fail to reject the null and can say the model is fair.
